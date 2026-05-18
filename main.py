@@ -1,103 +1,46 @@
 import streamlit as st
-import numpy as np
-from PIL import Image
+from streamlit_drawable_canvas import st_canvas
 
-st.set_page_config(page_title="Pixel Art Editor")
+st.set_page_config(
+    page_title="Tiny Pixel Editor",
+    layout="centered"
+)
 
-GRID_SIZE = 16
-PIXEL_SIZE = 30
+st.title("🎮 Tiny Pixel Editor")
 
-if "grid" not in st.session_state:
-    st.session_state.grid = np.full(
-        (GRID_SIZE, GRID_SIZE),
-        "#111111",
-        dtype=object
-    )
+st.write(
+    "A tiny retro-style pixel painter built with Python."
+)
 
-st.title("🎮 Tiny Pixel Art Editor")
-
-selected_color = st.color_picker(
-    "Pick a color",
+# Color Picker
+color = st.color_picker(
+    "Choose Color",
     "#ffffff"
 )
 
-st.write("Click cells to place pixels.")
+# Pixel Size Slider
+pixel_size = st.slider(
+    "Pixel Size",
+    min_value=5,
+    max_value=50,
+    value=20
+)
 
-# Create grid
-for row in range(GRID_SIZE):
+st.write("Paint chunky pixel-style squares onto the canvas.")
 
-    cols = st.columns(GRID_SIZE)
+# Canvas
+canvas_result = st_canvas(
+    fill_color=color,
+    stroke_width=pixel_size,
+    stroke_color=color,
+    background_color="#111111",
+    width=640,
+    height=640,
+    drawing_mode="freedraw",
+    point_display_radius=0,
+    key="canvas",
+)
 
-    for col in range(GRID_SIZE):
-
-        current_color = st.session_state.grid[row][col]
-
-        button_style = f"""
-            <style>
-            div[data-testid="stButton"] button {{
-                background-color: {current_color};
-                width: 30px;
-                height: 30px;
-                padding: 0;
-                border-radius: 0;
-                border: 1px solid #333;
-            }}
-            </style>
-        """
-
-        cols[col].markdown(button_style, unsafe_allow_html=True)
-
-        if cols[col].button(
-            " ",
-            key=f"{row}-{col}"
-        ):
-            st.session_state.grid[row][col] = selected_color
-            st.rerun()
-
-st.divider()
-
-# Clear button
-if st.button("Clear Canvas"):
-    st.session_state.grid = np.full(
-        (GRID_SIZE, GRID_SIZE),
-        "#111111",
-        dtype=object
-    )
-    st.rerun()
-
-# Export image
-if st.button("Export PNG"):
-
-    image = Image.new(
-        "RGB",
-        (GRID_SIZE, GRID_SIZE)
-    )
-
-    pixels = image.load()
-
-    for y in range(GRID_SIZE):
-        for x in range(GRID_SIZE):
-
-            hex_color = st.session_state.grid[y][x]
-
-            rgb = tuple(
-                int(hex_color[i:i+2], 16)
-                for i in (1, 3, 5)
-            )
-
-            pixels[x, y] = rgb
-
-    image = image.resize(
-        (GRID_SIZE * PIXEL_SIZE,
-         GRID_SIZE * PIXEL_SIZE),
-        Image.Resampling.NEAREST
-    )
-
-    image.save("pixel_art.png")
-
-    with open("pixel_art.png", "rb") as file:
-        st.download_button(
-            "Download PNG",
-            file,
-            file_name="pixel_art.png"
-        )
+st.info(
+    "Use the toolbar for undo, redo, clear, and download."
+)
